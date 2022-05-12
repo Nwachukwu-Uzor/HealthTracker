@@ -25,9 +25,11 @@ namespace HealthTracker.Api
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        private readonly IWebHostEnvironment _env;
+        public Startup(IConfiguration configuration, IWebHostEnvironment env)
         {
             Configuration = configuration;
+            _env = env;
         }
 
         public IConfiguration Configuration { get; }
@@ -38,9 +40,17 @@ namespace HealthTracker.Api
             // Update the JWT config from the settings
             services.Configure<JwtConfig>(Configuration.GetSection("JwtConfig"));
 
+            
             services.AddDbContext<AppDbContext>(options =>
             {
-                options.UseSqlite(Configuration.GetConnectionString("DefaultConnectionString"));
+                if (_env.IsDevelopment())
+                {
+                    options.UseSqlite(Configuration.GetConnectionString("DefaultConnectionString"));
+                } else
+                {
+                    options.UseNpgsql(Configuration.GetConnectionString("Deployment"));
+                }
+                
             });
 
             services.AddScoped<IUnitOfWork, UnitOfWork>();
